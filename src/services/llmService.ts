@@ -1,10 +1,22 @@
 import axios from "axios";
 import { ENV } from "../config/env";
 
-export async function callLLM(prompt: string): Promise<string> {
+interface Message {
+    role: "system" | "user" | "assistant";
+    content: string;
+}
+
+export async function callLLM(prompt: string): Promise<string>;
+export async function callLLM(messages: Message[]): Promise<string>;
+export async function callLLM(input: string | Message[]): Promise<string> {
     const apiUrl = ENV.LLM_API_URL;
     const apiKey = ENV.LLM_API_KEY;
     const model = "qwen/qwen3-32b";
+
+    // Convert string prompt to messages array if needed
+    const messages: Message[] = typeof input === "string" 
+        ? [{ role: "user", content: input }]
+        : input;
 
     try {
 
@@ -12,7 +24,7 @@ export async function callLLM(prompt: string): Promise<string> {
             apiUrl,
             {
                 model: model,
-                messages: [{ role: "user", content: prompt }],
+                messages: messages,
                 max_completion_tokens: 1000,
             },
             {
