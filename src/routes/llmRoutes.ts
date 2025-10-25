@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { callLLM } from "../services/llmService";
+import { analyzeLogs } from "../services/llmWithPromptService";
 
 const router = Router();
 
@@ -8,8 +8,8 @@ router.get("/test", (req: Request, res: Response) => {
     res.json({ message: "LLM service is working!", timestamp: new Date().toISOString() });
 });
 
+// Main analyze route using the log analyzer prompt
 router.post("/analyze", async (req: Request, res: Response) => {
-    // Check if req.body exists
     if (!req.body) {
         return res.status(400).json({ error: "Request body is missing. Make sure to send JSON with Content-Type: application/json" });
     }
@@ -21,12 +21,19 @@ router.post("/analyze", async (req: Request, res: Response) => {
     }
 
     try {
-        const response = await callLLM(prompt);
-        res.json({ response });
+        const response = await analyzeLogs(prompt);
+        res.json({ 
+            response,
+            metadata: {
+                promptType: "logAnalyzer",
+                timestamp: new Date().toISOString()
+            }
+        });
     } catch(error) {
         console.error("Error in analyze route:", error);
         res.status(500).json({ error: "Failed to analyze prompt" });
     }
 });
+
 
 export default router;
