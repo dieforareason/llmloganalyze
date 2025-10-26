@@ -1,17 +1,69 @@
-import * as llmService from "../src/services/llmService";
+import axios from "axios";
+import { callLLM } from "../src/services/llmService";
 
-jest.mock("../src/services/llmService");
+jest.mock("axios");
 
-describe('LLM Service', () => {
-    it('should return a response from the LLM', async () => {
-        const prompt = 'Hello, how are you?';
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-        (llmService.callLLM as jest.Mock).mockResolvedValueOnce('Hello! I am fine.');
+describe("callLLM", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-        const response = await llmService.callLLM(prompt);
-        expect(response).toBeDefined();
-        expect(typeof response).toBe('string');
-        expect(response.length).toBeGreaterThan(0);
-        expect(response).toBe('Hello! I am fine.');
+  it("should call axios.post and return the LLM response with string input", async () => {
+    
+    mockedAxios.post.mockResolvedValueOnce({
+      data: {
+        choices: [
+          { message: { content: "Mocked response from LLM" } }
+        ]
+      }
     });
-})
+    
+    const result = await callLLM("Hello, model!");
+    
+    expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        model: expect.any(String),
+        messages: [{ role: "user", content: "Hello, model!" }],
+      }),
+      expect.any(Object)
+    );
+    expect(result).toBe("Mocked response from LLM");
+  });
+
+  it("should call axios.post and return the LLM response with Message[] input", async () => {
+    const messages = [
+      { role: "system" as const, content: "You are a helpful assistant." },
+      { role: "user" as const, content: "What is this log do?" }
+    ];
+    mockedAxios.post.mockResolvedValueOnce({
+      data: {
+        choices: [
+          { message: { content: "Mocked response from LLM" } }
+        ]
+      }
+    });
+
+    const result = await callLLM(messages);
+
+    expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        model: expect.any(String),
+        messages: messages,
+      }),
+      expect.any(Object)
+    );
+    expect(result).toBe("Mocked response from LLM");
+  });
+
+  it("should throw an error when axios.post fails", async () => {
+    mockedAxios.post.mockRejectedValueOnce(new Error("Invalid API key"));
+
+    await expect(callLLM("test")).rejects.toThrow("Failed to call LLM API: Invalid API key");
+  });
+});

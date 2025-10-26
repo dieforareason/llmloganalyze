@@ -1,9 +1,9 @@
-interface Instruction {
+export interface Instruction {
     role: "system" | "user" | "assistant";
     content: string;
 }
 
-interface PromptConfig {
+export interface PromptConfig {
     name: string;
     description: string;
     instructions: Instruction[];
@@ -82,7 +82,7 @@ export class PromptService {
 }
 
 // Default configuration for log analyzer
-const defaultLogAnalyzerConfig: PromptConfig = {
+export const defaultLogAnalyzerConfig: PromptConfig = {
     name: "LogAnalyzerAssistant",
     description:
         "AI specialized in analyzing logs from Node.js, Java applications, and Linux servers. It helps detect issues, explain errors, and suggest possible fixes or next steps.",
